@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <title>পদার্থবিজ্ঞান ২য় পত্র</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html">← Go Back to Homepage</a>
+    <h1>পদার্থবিজ্ঞান ২য় পত্র সিলেবাস</h1>
+
+    <p style="color:#666; font-size:1.1rem; margin-bottom:20px;">
+        চ্যাপ্টার শেষ হলে বক্সে টিক চিহ্ন দাও
+    </p>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container" style="background:#eee;border-radius:10px;margin:20px 0;height:20px;width:100%;">
+        <div id="progress-bar" style="background:#2ecc71;height:20px;border-radius:10px;width:0%;transition:width 0.3s;"></div>
+    </div>
+
+    <p id="progress-text" style="font-weight:bold;color:#27ae60;">Progress: 0%</p>
+
+    <ul class="syllabus-list">
+        <li><input type="checkbox" id="physics2-ch1" class="save-cb"> তাপগতিবিদ্যা</li>
+        <li><input type="checkbox" id="physics2-ch2" class="save-cb"> স্থির তড়িৎ</li>
+        <li><input type="checkbox" id="physics2-ch3" class="save-cb"> চল তড়িৎ</li>
+        <li><input type="checkbox" id="physics2-ch4" class="save-cb"> ভৌত আলোকবিজ্ঞান</li>
+        <li><input type="checkbox" id="physics2-ch5" class="save-cb"> আধুনিক পদার্থবিজ্ঞানের সূচনা</li>
+        <li><input type="checkbox" id="physics2-ch6" class="save-cb"> পরমাণুর মডেল ও নিউক্লিয়ার পদার্থবিজ্ঞান</li>
+        <li><input type="checkbox" id="physics2-ch7" class="save-cb"> সেমিকন্ডাক্টর ও ইলেকট্রনিক্স</li>
+    </ul>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCzKl7JcSA74VUKlObhzeATfNjmqHoeKoo",
+  authDomain: "studytool-17d4e.firebaseapp.com",
+  projectId: "studytool-17d4e",
+  storageBucket: "studytool-17d4e.firebasestorage.app",
+  messagingSenderId: "380448981289",
+  appId: "1:380448981289:web:5dec498bbb8c6f99177738"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Unique user ID for each browser
+let userId = localStorage.getItem("study_uid");
+if (!userId) {
+    userId = "user_" + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem("study_uid", userId);
+}
+
+const checkboxes = document.querySelectorAll('.save-cb');
+const progressBar = document.getElementById('progress-bar');
+const progressText = document.getElementById('progress-text');
+
+// Function to calculate and show progress
+function updateProgress() {
+    const total = checkboxes.length;
+    const checked = document.querySelectorAll('.save-cb:checked').length;
+    const percentage = total === 0 ? 0 : Math.round((checked / total) * 100);
+
+    if(progressBar) progressBar.style.width = percentage + "%";
+    if(progressText) progressText.innerText = "Progress: " + percentage + "%";
+
+    // Save this subject's progress in localStorage (optional)
+    localStorage.setItem("physics2_total", percentage);
+}
+
+// Load and save data for each checkbox
+async function loadSavedData() {
+    const promises = Array.from(checkboxes).map(async (cb) => {
+        const docRef = doc(db, "user_progress", userId, "chapters", cb.id);
+
+        try {
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                cb.checked = docSnap.data().status;
+            }
+        } catch (e) {
+            console.error("Error loading chapter:", cb.id, e);
+        }
+
+        cb.addEventListener('change', async () => {
+            updateProgress(); // Update UI instantly
+            try {
+                await setDoc(doc(db, "user_progress", userId, "chapters", cb.id), {
+                    status: cb.checked
+                });
+            } catch (e) {
+                console.error("Error saving chapter:", e);
+            }
+        });
+    });
+
+    await Promise.all(promises);
+    updateProgress(); // Update progress bar after loading all data
+}
+
+loadSavedData();
+</script>
+
+</body>
+</html>

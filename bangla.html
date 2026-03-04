@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <title>বাংলা ১ম পএ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <a href="index.html">← Go Back to Homepage</a>
+    <h1>বাংলা ১ম পএ সিলেবাস</h1>
+    <p style="color:#666;font-size:1.1rem;margin-bottom:20px;">
+        গদ্য/কবিতা/সহপাঠ শেষ হলে বক্সে টিক চিহ্ন দাও
+    </p>
+
+    <div class="progress-container" style="background:#eee;border-radius:10px;margin:20px 0;height:20px;width:100%;">
+        <div id="progress-bar" style="background:#2ecc71;height:20px;width:0%;border-radius:10px;transition:width 0.3s;"></div>
+    </div>
+    <p id="progress-text" style="font-weight:bold;color:#27ae60;">Progress: 0%</p>
+
+    <!-- গদ্য -->
+    <h3>গদ্য</h3>
+    <ul class="syllabus-list">
+        <li><input type="checkbox" id="bangla-ch1" class="save-cb"> অপরিচিতা <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="bangla-ch2" class="save-cb"> বিলাসী <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="bangla-ch3" class="save-cb"> আমার পথ <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="bangla-ch4" class="save-cb"> মানব-কল্যাণ <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="bangla-ch5" class="save-cb"> মাসি-পিসি <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="bangla-ch6" class="save-cb"> রেইনকোট <a href="" target="_blank">🔗</a></li>
+    </ul>
+
+    <!-- কবিতা -->
+    <h3>কবিতা</h3>
+    <ul class="syllabus-list">
+        <li><input type="checkbox" id="bangla-ch7" class="save-cb"> সোনার তরী <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="bangla-ch8" class="save-cb"> বিদ্রোহী <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="bangla-ch9" class="save-cb"> প্রতিদান <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="bangla-ch10" class="save-cb"> তাহারেই পড়ে মনে <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="bangla-ch11" class="save-cb"> আঠারো বছর বয়স <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="bangla-ch12" class="save-cb"> ফেব্রুয়ারী ১৯৬৯ <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="bangla-ch13" class="save-cb"> আমি কিংবদন্তির কথা বলছি <a href="" target="_blank">🔗</a></li>
+    </ul>
+
+    <!-- সহপাঠ -->
+    <h3>সহপাঠ</h3>
+    <ul class="syllabus-list">
+        <li><input type="checkbox" id="bangla-ch14" class="save-cb"> লালসালু (উপন্যাস) <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="bangla-ch15" class="save-cb"> সিরাজুদ্দৌলা (নাটক) <a href="" target="_blank">🔗</a></li>
+    </ul>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCzKl7JcSA74VUKlObhzeATfNjmqHoeKoo",
+    authDomain: "studytool-17d4e.firebaseapp.com",
+    projectId: "studytool-17d4e",
+    storageBucket: "studytool-17d4e.firebasestorage.app",
+    messagingSenderId: "380448981289",
+    appId: "1:380448981289:web:5dec498bbb8c6f99177738"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Unique user ID
+let userId = localStorage.getItem("study_uid");
+if (!userId) {
+    userId = "user_" + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem("study_uid", userId);
+}
+
+const checkboxes = document.querySelectorAll('.save-cb');
+const progressBar = document.getElementById('progress-bar');
+const progressText = document.getElementById('progress-text');
+
+function updateProgress() {
+    const total = checkboxes.length;
+    const checked = document.querySelectorAll('.save-cb:checked').length;
+    const percentage = total === 0 ? 0 : Math.round((checked / total) * 100);
+    progressBar.style.width = percentage + "%";
+    progressText.innerText = "Progress: " + percentage + "%";
+}
+
+async function loadSavedData() {
+    const promises = Array.from(checkboxes).map(async (cb) => {
+        const docRef = doc(db, "user_progress", userId, "chapters", cb.id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) cb.checked = docSnap.data().status;
+
+        cb.addEventListener('change', async () => {
+            updateProgress();
+            await setDoc(doc(db, "user_progress", userId, "chapters", cb.id), {
+                status: cb.checked
+            });
+        });
+    });
+    await Promise.all(promises);
+    updateProgress();
+}
+
+loadSavedData();
+</script>
+
+</body>
+</html>

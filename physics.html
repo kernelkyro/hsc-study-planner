@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <title>পদার্থবিজ্ঞান ১ম পত্র</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html">← Go Back to Homepage</a>
+    <h1>পদার্থবিজ্ঞান ১ম পত্র সিলেবাস</h1>
+
+    <p style="color:#666;font-size:1.1rem;margin-bottom:20px;">
+        চ্যাপ্টার শেষ হলে বক্সে টিক চিহ্ন দাও
+    </p>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container" style="background:#eee;border-radius:10px;margin:20px 0;height:20px;width:100%;">
+        <div id="progress-bar" style="background:#2ecc71; height:20px; border-radius:10px; width:0%; transition:width 0.3s;"></div>
+
+
+    </div>
+
+    <p id="progress-text" style="font-weight:bold;color:#27ae60;">Progress: 0%</p>
+
+    <ul class="syllabus-list">
+        <li><input type="checkbox" id="physics-ch1" class="save-cb"> ভেক্টর</li>
+        <li><input type="checkbox" id="physics-ch2" class="save-cb"> নিউটনিয়ান বলবিদ্যা</li>
+        <li><input type="checkbox" id="physics-ch3" class="save-cb"> কাজ, শক্তি ও ক্ষমতা</li>
+        <li><input type="checkbox" id="physics-ch4" class="save-cb"> পদার্থের গাঠনিক ধর্ম</li>
+        <li><input type="checkbox" id="physics-ch5" class="save-cb"> পর্যাবৃত্ত গতি</li>
+        <li><input type="checkbox" id="physics-ch6" class="save-cb"> আদর্শ গ্যাস ও গ্যাসের গতিতত্ত্ব</li>
+    </ul>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCzKl7JcSA74VUKlObhzeATfNjmqHoeKoo",
+  authDomain: "studytool-17d4e.firebaseapp.com",
+  projectId: "studytool-17d4e",
+  storageBucket: "studytool-17d4e.firebasestorage.app",
+  messagingSenderId: "380448981289",
+  appId: "1:380448981289:web:5dec498bbb8c6f99177738"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// --- UNIQUE USER LOGIC ---
+// This creates a random ID for the browser so friends don't overwrite each other
+let userId = localStorage.getItem("study_uid");
+if (!userId) {
+    userId = "user_" + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem("study_uid", userId);
+}
+
+const checkboxes = document.querySelectorAll('.save-cb');
+const progressBar = document.getElementById('progress-bar');
+const progressText = document.getElementById('progress-text');
+
+// Function to calculate and show progress
+function updateProgress() {
+    const total = checkboxes.length;
+    const checked = document.querySelectorAll('.save-cb:checked').length;
+    const percentage = total === 0 ? 0 : Math.round((checked / total) * 100);
+
+    progressBar.style.width = percentage + "%";
+    progressText.innerText = "Progress: " + percentage + "%";
+    
+    // Optional: Save total percentage to use on Homepage later
+    localStorage.setItem("physics_total", percentage);
+}
+
+// 1. Load data for each checkbox
+async function loadSavedData() {
+    // We create an array of promises to make sure we wait for ALL of them
+    const promises = Array.from(checkboxes).map(async (cb) => {
+        // We save data under: user_progress / [userId] / chapters / [chapterId]
+        const docRef = doc(db, "user_progress", userId, "chapters", cb.id);
+        
+        try {
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                cb.checked = docSnap.data().status;
+            }
+        } catch (e) {
+            console.error("Error loading chapter:", cb.id, e);
+        }
+
+        // 2. Add listener so it saves when you click
+        cb.addEventListener('change', async () => {
+            updateProgress(); // UI updates instantly
+            try {
+                const ref = doc(db, "user_progress", userId, "chapters", cb.id);
+                await setDoc(ref, { status: cb.checked });
+            } catch (e) {
+                console.error("Error saving data:", e);
+            }
+        });
+    });
+
+    // Wait for all boxes to be set from Firebase
+    await Promise.all(promises);
+    
+    // Finally, update the bar for the first time
+    updateProgress();
+}
+
+loadSavedData();
+</script>
+
+</body>
+</html>

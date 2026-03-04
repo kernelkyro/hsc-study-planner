@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Improvement Exam Roadmap</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.button-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    padding: 10px;
+}
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 60px;
+    padding: 10px;
+    text-decoration: none;
+    background: #007bff;
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>HSC Starts in</h1>
+    <div id="timer">Loading...</div>
+
+    <!-- TOTAL PROGRESS BAR -->
+    <div class="total-progress-container" style="margin: 20px 0; text-align: center;">
+        <h3>Total Syllabus Completed</h3>
+        <div style="background: #e0e0e0; border-radius: 13px; height: 25px; width: 100%; margin: 10px 0; overflow: hidden;">
+            <div id="total-bar" style="background:#4caf50; height:25px; border-radius:13px; width:0%; transition:width 0.8s;"></div>
+        </div>
+        <p id="total-text" style="font-weight: bold;">Calculating... 0%</p>
+    </div>
+
+    <!-- SUBJECT BREAKDOWN -->
+    <div id="subject-breakdown" style="margin-top:20px;">
+        <h3>Subject Progress</h3>
+        <div id="subject-list"></div>
+    </div>
+
+    <div class="button-container">
+        <a href="math.html" class="btn">উচ্চতর গণিত ১ম পত্র</a>
+        <a href="math2.html" class="btn">উচ্চতর গণিত ২য় পত্র</a>
+        <a href="physics.html" class="btn">পদার্থবিজ্ঞান ১ম পত্র</a>
+        <a href="physics2.html" class="btn">পদার্থবিজ্ঞান ২য় পত্র</a>
+        <a href="chemistry.html" class="btn">রসায়ন ১ম পত্র</a>
+        <a href="chemistry2.html" class="btn">রসায়ন ২য় পত্র</a>
+        <a href="biology.html" class="btn">জীববিজ্ঞান ১ম পত্র</a>
+        <a href="biology2.html" class="btn">জীববিজ্ঞান ২য় পত্র</a>
+        <a href="english.html" class="btn">ইংরেজি ১ম পত্র</a>
+        <a href="english2.html" class="btn">ইংরেজি ২য় পত্র</a>
+        <a href="bangla.html" class="btn">বাংলা ১ম পত্র</a>
+        <a href="bangla2.html" class="btn">বাংলা ২য় পত্র</a>
+        <a href="ict.html" class="btn">তথ্য ও যোগাযোগ প্রযুক্তি</a>
+    </div>
+</div>
+
+<!-- COUNTDOWN TIMER -->
+<script>
+const examDate = new Date("July 17, 2026 10:00:00").getTime();
+const countdown = setInterval(function() {
+    const distance = examDate - new Date().getTime();
+    const days = Math.floor(distance / (1000*60*60*24));
+    const hours = Math.floor((distance % (1000*60*60*24)) / (1000*60*60));
+    const minutes = Math.floor((distance % (1000*60*60)) / (1000*60));
+    const seconds = Math.floor((distance % (1000*60)) / 1000);
+    document.getElementById("timer").innerHTML = days+"d "+hours+"h "+minutes+"m "+seconds+"s";
+    if(distance < 0) {
+        clearInterval(countdown);
+        document.getElementById("timer").innerHTML = "EXAM HAS STARTED!";
+    }
+},1000);
+</script>
+
+<!-- FIREBASE TOTAL + SUBJECT BREAKDOWN -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCzKl7JcSA74VUKlObhzeATfNjmqHoeKoo",
+    authDomain: "studytool-17d4e.firebaseapp.com",
+    projectId: "studytool-17d4e",
+    storageBucket: "studytool-17d4e.appspot.com",
+    messagingSenderId: "380448981289",
+    appId: "1:380448981289:web:5dec498bbb8c6f99177738"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// UNIQUE USER LOGIC
+let userId = localStorage.getItem("study_uid");
+if (!userId) {
+    userId = "user_" + Math.random().toString(36).substr(2,9);
+    localStorage.setItem("study_uid", userId);
+}
+
+// Friendly names for all subjects
+const SUBJECT_NAMES = {
+    physics: "Physics 1st Paper",
+    physics2: "Physics 2nd Paper",
+    math: "Math 1st Paper",
+    math2: "Math 2nd Paper",
+    chemistry: "Chemistry 1st Paper",
+    chemistry2: "Chemistry 2nd Paper",
+    biology: "Biology 1st Paper",
+    biology2: "Biology 2nd Paper",
+    english: "English 1st Paper",
+    english2: "English 2nd Paper",
+    bangla: "Bangla 1st Paper",
+    bangla2: "Bangla 2nd Paper",
+    ict: "ICT"
+};
+
+async function calculateTotalProgress() {
+    const totalBar = document.getElementById('total-bar');
+    const totalText = document.getElementById('total-text');
+    const subjectList = document.getElementById('subject-list');
+
+    const TOTAL_CHAPTERS = 101;
+
+    if(!userId) {
+        totalText.innerText = "Start by checking a chapter first.";
+        return;
+    }
+
+    try {
+        const chaptersRef = collection(db, "user_progress", userId, "chapters");
+        const querySnapshot = await getDocs(chaptersRef);
+
+        let completedCount = 0;
+        let subjectData = {};
+
+        querySnapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            const id = docSnap.id;
+            const subject = id.split("-")[0];
+
+            if(!subjectData[subject]) {
+                subjectData[subject] = { total: 0, completed: 0 };
+            }
+
+            subjectData[subject].total++;
+            if(data.status === true) {
+                completedCount++;
+                subjectData[subject].completed++;
+            }
+        });
+
+        // Total progress
+        const percentage = Math.round((completedCount / TOTAL_CHAPTERS) * 100);
+        totalBar.style.width = percentage + "%";
+        totalText.innerText = `Total Progress: ${percentage}% (${completedCount}/${TOTAL_CHAPTERS})`;
+
+        // Subject-wise breakdown
+        subjectList.innerHTML = "";
+        for(const subject in subjectData) {
+            const s = subjectData[subject];
+            const subjectPercent = s.total === 0 ? 0 : Math.round((s.completed / s.total) * 100);
+            const div = document.createElement("div");
+            div.style.marginBottom = "8px";
+            div.innerHTML = `<strong>${SUBJECT_NAMES[subject] || subject.toUpperCase()}</strong>: ${s.completed}/${s.total} (${subjectPercent}%)`;
+            subjectList.appendChild(div);
+        }
+
+    } catch(error) {
+        console.error("FIREBASE ERROR:", error);
+        totalText.innerText = "Error loading data.";
+    }
+}
+
+calculateTotalProgress();
+</script>
+</body>
+</html>

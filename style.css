@@ -1,0 +1,60 @@
+/* 1. Page Background */
+body { 
+    font-family: Arial, sans-serif; 
+    background-color: #f4f4f9; 
+    text-align: center; 
+    margin: 0; 
+    padding: 20px;
+}
+
+/* 2. The White Box */
+.container { 
+    background: white; 
+    padding: 30px; 
+    border-radius: 15px; 
+    display: block; 
+    width: 90%;            
+    max-width: 400px;      
+    margin: 20px auto; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+}
+
+/* 3. The Buttons */
+.btn { 
+    display: block;        
+    width: 85%;            
+    margin: 12px auto;     
+    padding: 15px 10px; 
+    background-color: #2980b9; 
+    color: white !important; 
+    text-decoration: none; 
+    border-radius: 8px; 
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.btn:hover {
+    background-color: #1a5276;
+}
+
+/* 4. The Timer (HSC Countdown) - CHANGE COLOR/SIZE HERE */
+#timer {
+    font-size: 24px;   /* Change this to make text bigger or smaller */
+    color: #e74c3c;    /* Current: Red. Change to #2ecc71 for Green */
+    font-weight: bold; 
+    margin-bottom: 20px; 
+    display: block;
+}
+
+/* 5. NEW: Fix for Syllabus List (Removes Dots) */
+.syllabus-list {
+    list-style: none;  /* This removes the black dots */
+    padding: 0;        /* This aligns it to the left properly */
+    text-align: left;  /* Keeps the text left-aligned inside the box */
+}
+
+/* 6. NEW: Fix for Emojis (Removes Underlines) */
+a {
+    text-decoration: none !important; /* This kills the underline on emojis */
+}

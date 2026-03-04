@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <title>English 2nd paper</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html">← Go Back to Homepage</a>
+    <h1>English 2nd paper mark distribution</h1>
+    <p style="color: #666; font-size: 1.1rem; margin-bottom: 20px;">
+        টপিক শেষ হলে বক্সে টিক চিহ্ন দাও
+    </p>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container" style="background:#eee;border-radius:10px;margin:20px 0;height:20px;width:100%;">
+        <div id="progress-bar" style="background:#2ecc71;height:20px;width:0%;border-radius:10px;transition:width 0.3s;"></div>
+    </div>
+    <p id="progress-text" style="font-weight:bold;color:#27ae60;">Progress: 0%</p>
+
+    <!-- Part A: Grammar -->
+    <h3>Part A: Grammar (60 Marks)</h3>
+    <ul class="syllabus-list">
+        <li><input type="checkbox" id="english2-ch1" class="save-cb"> Gap filling activities without clues (for prepositions) (0.5x10) = 05 <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="english2-ch2" class="save-cb"> Gap filling activities with clues (0.5x10) = 05 <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="english2-ch3" class="save-cb"> Completing sentences (1x10) = 10 <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="english2-ch4" class="save-cb"> Use of verbs (0.5x14) = 07 <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="english2-ch5" class="save-cb"> Narrative style (direct to indirect and vice versa) (1x7) = 07 <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="english2-ch6" class="save-cb"> Use of modifiers (0.5x10) = 05 <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="english2-ch7" class="save-cb"> Use of sentence connectors (0.5x14) = 07 <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="english2-ch8" class="save-cb"> Use of synonym and antonym (0.5x14) = 07 <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="english2-ch9" class="save-cb"> Punctuation (0.5x14) = 07 <a href="" target="_blank">🔗</a></li>
+    </ul>
+
+    <!-- Part B: Composition -->
+    <h3>Part B: Composition (40 Marks)</h3>
+    <ul class="syllabus-list">
+        <li><input type="checkbox" id="english2-ch10" class="save-cb"> Formal letter writing/gmail = 10 <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="english2-ch11" class="save-cb"> Writing paragraph (by listing/description) = 15 <a href="" target="_blank">🔗</a></li>
+        <li><input type="checkbox" id="english2-ch12" class="save-cb"> Writing paragraph (by comparison and contrast/cause and effect) = 15 <a href="" target="_blank">🔗</a></li>
+    </ul>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCzKl7JcSA74VUKlObhzeATfNjmqHoeKoo",
+  authDomain: "studytool-17d4e.firebaseapp.com",
+  projectId: "studytool-17d4e",
+  storageBucket: "studytool-17d4e.firebasestorage.app",
+  messagingSenderId: "380448981289",
+  appId: "1:380448981289:web:5dec498bbb8c6f99177738"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Unique user ID
+let userId = localStorage.getItem("study_uid");
+if (!userId) {
+    userId = "user_" + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem("study_uid", userId);
+}
+
+const checkboxes = document.querySelectorAll('.save-cb');
+const progressBar = document.getElementById('progress-bar');
+const progressText = document.getElementById('progress-text');
+
+function updateProgress() {
+    const total = checkboxes.length;
+    const checked = document.querySelectorAll('.save-cb:checked').length;
+    const percentage = total === 0 ? 0 : Math.round((checked / total) * 100);
+    progressBar.style.width = percentage + "%";
+    progressText.innerText = "Progress: " + percentage + "%";
+}
+
+async function loadSavedData() {
+    const promises = Array.from(checkboxes).map(async (cb) => {
+        const docRef = doc(db, "user_progress", userId, "chapters", cb.id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) cb.checked = docSnap.data().status;
+
+        cb.addEventListener('change', async () => {
+            updateProgress();
+            const ref = doc(db, "user_progress", userId, "chapters", cb.id);
+            await setDoc(ref, { status: cb.checked });
+        });
+    });
+    await Promise.all(promises);
+    updateProgress();
+}
+
+loadSavedData();
+</script>
+
+</body>
+</html>
